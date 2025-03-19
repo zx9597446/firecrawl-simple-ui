@@ -1,0 +1,45 @@
+[build-system]
+requires = ["uv>=0.1.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "firecrawl-simple-ui"
+version = "0.1.0"
+description = "Firecrawl Simple UI"
+authors = [
+    { name="zx", email="zx9597446@gmail.com" }
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "httpx",
+    "python-dotenv"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "isort",
+    "mypy",
+    "flake8"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
