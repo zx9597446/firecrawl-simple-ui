@@ -36,6 +36,12 @@ st.markdown(
         padding: 1rem;
         margin-bottom: 1rem;
     }
+    .download-section {
+        background-color: #e6e9ef;
+        border-radius: 5px;
+        padding: 0.5rem;
+        margin-bottom: 1rem;
+    }
 </style>
 """,
     unsafe_allow_html=True,
@@ -49,21 +55,17 @@ if "batch_results" not in st.session_state:
 if "batch_status" not in st.session_state:
     st.session_state.batch_status = {}
 
-    # Function to load settings from local storage
-
-
+# Function to load settings from local storage
 def load_settings():
     if os.path.exists("firecrawl_settings.json"):
         with open("firecrawl_settings.json", "r") as f:
             return json.load(f)
     return {"api_url": "https://api.firecrawl.dev", "api_key": ""}
 
-
 # Function to save settings to local storage
 def save_settings(settings):
     with open("firecrawl_settings.json", "w") as f:
         json.dump(settings, f)
-
 
 # Load settings
 settings = load_settings()
@@ -88,14 +90,12 @@ with st.expander("Configure API Settings", expanded=True):
         save_settings(settings)
         st.success("Settings saved successfully!")
 
-
 # Function to generate download link
 def get_download_link(content, filename, link_text):
     if isinstance(content, dict):
-        content = json.dumps(content, indent=2)
+        content = json.dumps(content, indent=2, ensure_ascii=False)
     b64 = base64.b64encode(content.encode()).decode()
     return f'<a href="data:text/plain;base64,{b64}" download="{filename}" target="_blank">{link_text}</a>'
-
 
 # Function to check batch scrape status
 def check_batch_status(batch_id):
@@ -104,7 +104,6 @@ def check_batch_status(batch_id):
         f"{settings['api_url']}/v1/batch/scrape/{batch_id}", headers=headers
     )
     return response.json()
-
 
 # Function to handle batch scrape completion
 def handle_batch_completion(batch_id):
@@ -123,7 +122,6 @@ def handle_batch_completion(batch_id):
         tries += 1
         time.sleep(2)
     return False
-
 
 # Tabs for different functionalities
 tab1, tab2 = st.tabs(["Single URL Scrape", "Batch Scrape"])
@@ -214,41 +212,44 @@ with tab1:
 
         if "data" in st.session_state.scrape_result:
             data = st.session_state.scrape_result["data"]
-
-            # Add download links for Markdown and Full HTML
+            
+            # Display download section at the top
+            st.markdown("<div class='download-section'>", unsafe_allow_html=True)
+            st.markdown("### Download Options")
+            
+            # Download links
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             if "markdown" in data:
-                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 st.markdown(
                     get_download_link(
-                        data["markdown"], f"scrape_{timestamp}.md", "Download Markdown"
+                        data["markdown"], f"scrape_{timestamp}.md", "⬇️ Download Markdown"
                     ),
                     unsafe_allow_html=True,
                 )
             if "html" in data or "rawHtml" in data:
                 html_content = data.get("html", "") or data.get("rawHtml", "")
-                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
                 st.markdown(
                     get_download_link(
-                        html_content, f"scrape_full_{timestamp}.html", "Download Full HTML"
+                        html_content,
+                        f"scrape_full_{timestamp}.html",
+                        "⬇️ Download Full HTML",
                     ),
                     unsafe_allow_html=True,
                 )
-
-            # Download full JSON
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             st.markdown(
                 get_download_link(
                     st.session_state.scrape_result,
                     f"scrape_full_{timestamp}.json",
-                    "Download Full JSON Result",
+                    "⬇️ Download Full JSON Result",
                 ),
                 unsafe_allow_html=True,
             )
+            st.markdown("</div>", unsafe_allow_html=True)
 
             # Display metadata
             if "metadata" in data:
-                with st.expander("Metadata", expanded=False):
-                    st.json(data["metadata"])
+                st.markdown("### Metadata")
+                st.json(data["metadata"])
 
             # Display content tabs
             content_tabs = []
@@ -266,52 +267,16 @@ with tab1:
                 if "markdown" in data:
                     with tabs[tab_index]:
                         st.markdown(data["markdown"])
-                        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                        st.markdown(
-                            get_download_link(
-                                data["markdown"], f"scrape_{timestamp}.md", "Download Markdown"
-                            ),
-                            unsafe_allow_html=True,
-                        )
                     tab_index += 1
 
                 if "html" in data:
                     with tabs[tab_index]:
                         st.code(data["html"], language="html")
-                        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                        st.markdown(
-                            get_download_link(
-                                data["html"],
-                                f"scrape_{timestamp}.html",
-                                "Download HTML",
-                            ),
-                            unsafe_allow_html=True,
-                        )
                     tab_index += 1
 
                 if "rawHtml" in data:
                     with tabs[tab_index]:
                         st.code(data["rawHtml"], language="html")
-                        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                        st.markdown(
-                            get_download_link(
-                                data["rawHtml"],
-                                f"scrape_raw_{timestamp}.html",
-                                "Download Raw HTML",
-                            ),
-                            unsafe_allow_html=True,
-                        )
-
-            # Download full JSON
-            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-            st.markdown(
-                get_download_link(
-                    st.session_state.scrape_result,
-                    f"scrape_full_{timestamp}.json",
-                    "Download Full JSON Result",
-                ),
-                unsafe_allow_html=True,
-            )
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -449,39 +414,66 @@ with tab2:
 
                 # Display results
                 if batch_data:
+                    # Create a combined markdown file with all results
+                    combined_markdown = ""
+                    for i, result in enumerate(batch_data):
+                        metadata = result.get("metadata", {})
+                        url = metadata.get("sourceURL", f"URL #{i+1}")
+                        if "markdown" in result:
+                            combined_markdown += f"# {url}\n\n"
+                            combined_markdown += result["markdown"]
+                            combined_markdown += "\n\n---\n\n"
+
+                    # Add download links for combined files at the top
+                    st.markdown("<div class='download-section'>", unsafe_allow_html=True)
+                    st.markdown("### Download Combined Results")
+                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                    
+                    # Download combined JSON with proper encoding
+                    st.markdown(
+                        get_download_link(
+                            {"results": batch_data},
+                            f"batch_full_{batch_id}_{timestamp}.json",
+                            "⬇️ Download Combined JSON Results",
+                        ),
+                        unsafe_allow_html=True,
+                    )
+
+                    # Download combined markdown if markdown was included
+                    if combined_markdown:
+                        st.markdown(
+                            get_download_link(
+                                combined_markdown,
+                                f"batch_full_{batch_id}_{timestamp}.md",
+                                "⬇️ Download Combined Markdown Results",
+                            ),
+                            unsafe_allow_html=True,
+                        )
+                    st.markdown("</div>", unsafe_allow_html=True)
+
                     # Display individual results
                     for i, result in enumerate(batch_data):
                         metadata = result.get("metadata", {})
                         url = metadata.get("sourceURL", f"URL #{i+1}")
-                        # Display metadata
-                        st.markdown(f"**Metadata for {url}**")
+
+                        st.markdown(f"### {url}")
+                        
+                        # Display metadata in a collapsible container
+                        st.markdown("""
+                            <details>
+                                <summary>Metadata</summary>
+                                <div style="margin-left: 1rem;">
+                        """, unsafe_allow_html=True)
                         st.json(metadata)
+                        st.markdown("</div></details>", unsafe_allow_html=True)
 
                         # Display content
                         if "markdown" in result:
-                            st.markdown("### Markdown")
+                            st.markdown("#### Markdown")
                             st.markdown(result["markdown"])
-                            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                            st.markdown(
-                                get_download_link(
-                                    result["markdown"],
-                                    f"batch_{batch_id}_item{i}_{timestamp}.md",
-                                    "⬇️ Markdown",
-                                ),
-                                unsafe_allow_html=True,
-                            )
-                            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                            st.markdown(
-                                get_download_link(
-                                    result["markdown"],
-                                    f"batch_{batch_id}_item{i}_{timestamp}.md",
-                                    "Download Markdown",
-                                ),
-                                unsafe_allow_html=True,
-                            )
 
                         if "html" in result:
-                            st.markdown("### HTML")
+                            st.markdown("#### HTML")
                             st.code(
                                 (
                                     result["html"][:500] + "..."
@@ -490,18 +482,9 @@ with tab2:
                                 ),
                                 language="html",
                             )
-                            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                            st.markdown(
-                                get_download_link(
-                                    result["html"],
-                                    f"batch_{batch_id}_item{i}_{timestamp}.html",
-                                    "⬇️ HTML",
-                                ),
-                                unsafe_allow_html=True,
-                            )
 
                         if "rawHtml" in result:
-                            st.markdown("### Raw HTML")
+                            st.markdown("#### Raw HTML")
                             st.code(
                                 (
                                     result["rawHtml"][:500] + "..."
@@ -510,25 +493,10 @@ with tab2:
                                 ),
                                 language="html",
                             )
-                            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                            st.markdown(
-                                get_download_link(
-                                    result["rawHtml"],
-                                    f"batch_{batch_id}_item{i}_raw_{timestamp}.html",
-                                    "⬇️ Raw HTML",
-                                ),
-                                unsafe_allow_html=True,
-                            )
-                    # Download full JSON
-                    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-                    st.markdown(
-                        get_download_link(
-                            {"data": batch_data},
-                            f"batch_full_{batch_id}_{timestamp}.json",
-                            "⬇️ Full JSON",
-                        ),
-                        unsafe_allow_html=True,
-                    )
+
+                        # Add separator between items
+                        if i < len(batch_data) - 1:
+                            st.markdown("---")
 
                 st.markdown("</div>", unsafe_allow_html=True)
 
