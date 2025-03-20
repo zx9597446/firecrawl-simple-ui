@@ -571,10 +571,10 @@ with tab3:
                 payload = {
                     "query": query,
                     "limit": limit,
-                    "tbs": tbs if tbs else None,
+                    "tbs": tbs if tbs else "",
                     "lang": lang,
                     "country": country,
-                    "location": location if location else None,
+                    "location": location if location else "",
                     "timeout": timeout,
                     "scrapeOptions": scrape_options
                 }
