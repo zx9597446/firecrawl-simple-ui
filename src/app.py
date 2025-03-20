@@ -635,6 +635,21 @@ with tab3:
                 ),
                 unsafe_allow_html=True,
             )
+            
+            # Add button to copy markdown to clipboard
+            st.markdown("""
+            <button onclick="copyMarkdown()" style="margin-top: 0.5rem;">
+                📋 Copy Markdown to Clipboard
+            </button>
+            <script>
+            function copyMarkdown() {
+                navigator.clipboard.writeText(`""" + combined_markdown.replace("`", "\\`") + """`)
+                    .then(() => alert('Markdown copied to clipboard!'))
+                    .catch(() => alert('Failed to copy markdown'));
+            }
+            </script>
+            """, unsafe_allow_html=True)
+            
         st.markdown("</div>", unsafe_allow_html=True)
         
         # Display individual results
