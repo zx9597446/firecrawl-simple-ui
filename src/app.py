@@ -152,7 +152,7 @@ with tab1:
             mobile = st.checkbox("Mobile", value=False)
             block_ads = st.checkbox("Block Ads", value=True)
         with col2:
-            wait_for = st.number_input("Wait For (ms)", value=1000, min_value=0)
+            wait_for = st.number_input("Wait For (ms)", value=0, min_value=0, help="等待页面加载完成的时间（毫秒）。简单页面可以设为0，复杂页面建议1000-5000ms")
             timeout = st.number_input(
                 "Timeout (ms)", value=60000, min_value=1000, step=1000
             )
@@ -312,7 +312,7 @@ with tab2:
             )
         with col2:
             batch_wait_for = st.number_input(
-                "Wait For (ms)", value=1000, min_value=0, key="batch_wait_for"
+                "Wait For (ms)", value=0, min_value=0, key="batch_wait_for", help="等待页面加载完成的时间（毫秒）。简单页面可以设为0，复杂页面建议1000-5000ms"
             )
             batch_timeout = st.number_input(
                 "Timeout (ms)",
@@ -555,7 +555,7 @@ with tab3:
             scrape_options["mobile"] = st.checkbox("Mobile", value=False, key="search_mobile")
             scrape_options["blockAds"] = st.checkbox("Block Ads", value=True, key="search_block_ads")
         with col2:
-            scrape_options["waitFor"] = st.number_input("Wait For (ms)", value=1000, min_value=0, key="search_wait_for")
+            scrape_options["waitFor"] = st.number_input("Wait For (ms)", value=0, min_value=0, key="search_wait_for", help="等待页面加载完成的时间（毫秒）。简单页面可以设为0，复杂页面建议1000-5000ms")
             scrape_options["removeBase64Images"] = st.checkbox("Remove Base64 Images", value=True, key="search_remove_base64_images")
     
     if st.button("Search"):
