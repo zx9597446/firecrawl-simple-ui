@@ -538,13 +538,13 @@ with tab3:
     
     col1, col2 = st.columns(2)
     with col1:
-        limit = st.number_input("Result Limit", min_value=1, max_value=100, value=5)
-        lang = st.text_input("Language Code", value="en")
-        timeout = st.number_input("Timeout (ms)", value=60000, min_value=1000, step=1000)
+        limit = st.number_input("Result Limit", min_value=1, max_value=100, value=5, key="search_limit")
+        lang = st.text_input("Language Code", value="en", key="search_lang")
+        timeout = st.number_input("Timeout (ms)", value=60000, min_value=1000, step=1000, key="search_timeout")
     with col2:
-        country = st.text_input("Country Code", value="us")
-        location = st.text_input("Location")
-        tbs = st.text_input("Time-based Search (tbs)")
+        country = st.text_input("Country Code", value="us", key="search_country")
+        location = st.text_input("Location", key="search_location")
+        tbs = st.text_input("Time-based Search (tbs)", key="search_tbs")
     
     # Scrape options
     scrape_options = {}
