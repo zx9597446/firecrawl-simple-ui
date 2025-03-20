@@ -601,29 +601,103 @@ with tab3:
         st.markdown("<div class='result-area'>", unsafe_allow_html=True)
         
         results = st.session_state.search_results.get("data", [])
-        for i, result in enumerate(results):
-            st.markdown(f"### Result {i+1}")
-            
-            # Display metadata
-            if "metadata" in result:
-                st.markdown("#### Metadata")
-                st.json(result["metadata"])
-            
-            # Display content
+        
+        # Create combined markdown file with all results
+        combined_markdown = ""
+        for result in results:
             if "markdown" in result:
-                st.markdown("#### Markdown")
-                st.markdown(result["markdown"])
+                combined_markdown += f"# {result.get('title', 'Untitled')}\n\n"
+                combined_markdown += result["markdown"]
+                combined_markdown += "\n\n---\n\n"
+        
+        # Add download links at the top
+        st.markdown("<div class='download-section'>", unsafe_allow_html=True)
+        st.markdown("### Download Options")
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        
+        # Download combined JSON
+        st.markdown(
+            get_download_link(
+                st.session_state.search_results,
+                f"search_results_{timestamp}.json",
+                "⬇️ Download Full JSON Results",
+            ),
+            unsafe_allow_html=True,
+        )
+        
+        # Download combined markdown if available
+        if combined_markdown:
+            st.markdown(
+                get_download_link(
+                    combined_markdown,
+                    f"search_results_{timestamp}.md",
+                    "⬇️ Download Combined Markdown",
+                ),
+                unsafe_allow_html=True,
+            )
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Display individual results
+        for i, result in enumerate(results):
+            st.markdown(f"### Result {i+1}: {result.get('title', 'Untitled')}")
             
+            # Display metadata in collapsible section
+            with st.expander("Metadata"):
+                if "metadata" in result:
+                    st.json(result["metadata"])
+                else:
+                    st.info("No metadata available")
+            
+            # Display description if available
+            if result.get("description"):
+                st.markdown("#### Description")
+                st.markdown(result["description"])
+            
+            # Display content tabs
+            content_tabs = []
+            if "markdown" in result:
+                content_tabs.append("Markdown")
             if "html" in result:
-                st.markdown("#### HTML")
-                st.code(result["html"], language="html")
-            
+                content_tabs.append("HTML")
             if "rawHtml" in result:
-                st.markdown("#### Raw HTML")
-                st.code(result["rawHtml"], language="html")
+                content_tabs.append("Raw HTML")
             
+            if content_tabs:
+                tabs = st.tabs(content_tabs)
+                
+                tab_index = 0
+                if "markdown" in result:
+                    with tabs[tab_index]:
+                        st.markdown(result["markdown"])
+                    tab_index += 1
+                
+                if "html" in result:
+                    with tabs[tab_index]:
+                        st.code(result["html"], language="html")
+                    tab_index += 1
+                
+                if "rawHtml" in result:
+                    with tabs[tab_index]:
+                        st.code(result["rawHtml"], language="html")
+            
+            # Display links if available
+            if result.get("links"):
+                st.markdown("#### Links")
+                for link in result["links"]:
+                    st.markdown(f"- [{link}]({link})")
+            
+            # Display screenshot if available
+            if result.get("screenshot"):
+                st.markdown("#### Screenshot")
+                st.image(result["screenshot"])
+            
+            # Add separator between items
             if i < len(results) - 1:
                 st.markdown("---")
+        
+        # Display warning if present
+        if st.session_state.search_results.get("warning"):
+            st.warning(st.session_state.search_results["warning"])
         
         st.markdown("</div>", unsafe_allow_html=True)
 
