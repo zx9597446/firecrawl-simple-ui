@@ -554,6 +554,28 @@ with tab3:
             scrape_options["onlyMainContent"] = st.checkbox("Only Main Content", value=True, key="search_only_main_content")
             scrape_options["mobile"] = st.checkbox("Mobile", value=False, key="search_mobile")
             scrape_options["blockAds"] = st.checkbox("Block Ads", value=True, key="search_block_ads")
+            
+            # Formats selection
+            st.markdown("**Output Formats**")
+            formats = []
+            if st.checkbox("Markdown", value=True, key="search_markdown"):
+                formats.append("markdown")
+            if st.checkbox("HTML", value=False, key="search_html"):
+                formats.append("html")
+            if st.checkbox("Raw HTML", value=False, key="search_raw_html"):
+                formats.append("rawHtml")
+            if st.checkbox("Links", value=False, key="search_links"):
+                formats.append("links")
+            if st.checkbox("Screenshot", value=False, key="search_screenshot"):
+                formats.append("screenshot")
+            if st.checkbox("Full Page Screenshot", value=False, key="search_screenshot_full"):
+                formats.append("screenshot@fullPage")
+            if st.checkbox("Extract", value=False, key="search_extract"):
+                formats.append("extract")
+            
+            if formats:
+                scrape_options["formats"] = formats
+                
         with col2:
             scrape_options["waitFor"] = st.number_input("Wait For (ms)", value=0, min_value=0, key="search_wait_for", help="等待页面加载完成的时间（毫秒）。简单页面可以设为0，复杂页面建议1000-5000ms")
             scrape_options["removeBase64Images"] = st.checkbox("Remove Base64 Images", value=True, key="search_remove_base64_images")
@@ -604,11 +626,15 @@ with tab3:
         
         # Create combined markdown file with all results
         combined_markdown = ""
+        combined_links = []
         for result in results:
             if "markdown" in result:
                 combined_markdown += f"# {result.get('title', 'Untitled')}\n\n"
                 combined_markdown += result["markdown"]
                 combined_markdown += "\n\n---\n\n"
+            
+            if "links" in result:
+                combined_links.extend(result["links"])
         
         # Add download links at the top
         st.markdown("<div class='download-section'>", unsafe_allow_html=True)
@@ -649,6 +675,17 @@ with tab3:
             }
             </script>
             """, unsafe_allow_html=True)
+                    
+            # Download combined links if available
+            if combined_links:
+                st.markdown(
+                    get_download_link(
+                        "\n".join(combined_links),
+                        f"search_links_{timestamp}.txt",
+                        "⬇️ Download Combined Links",
+                    ),
+                    unsafe_allow_html=True,
+                )
             
         st.markdown("</div>", unsafe_allow_html=True)
         
