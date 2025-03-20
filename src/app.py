@@ -54,6 +54,8 @@ if "batch_results" not in st.session_state:
     st.session_state.batch_results = {}
 if "batch_status" not in st.session_state:
     st.session_state.batch_status = {}
+if "search_results" not in st.session_state:
+    st.session_state.search_results = None
 
 # Function to load settings from local storage
 def load_settings():
@@ -124,7 +126,7 @@ def handle_batch_completion(batch_id):
     return False
 
 # Tabs for different functionalities
-tab1, tab2 = st.tabs(["Single URL Scrape", "Batch Scrape"])
+tab1, tab2, tab3 = st.tabs(["Single URL Scrape", "Batch Scrape", "Search"])
 
 # Single URL Scrape
 with tab1:
@@ -526,6 +528,104 @@ with tab2:
                         )
             else:
                 st.error("Please enter a batch job ID")
+
+# Search Tab
+with tab3:
+    st.markdown("<div class='sub-header'>Search</div>", unsafe_allow_html=True)
+    
+    # Search parameters
+    query = st.text_input("Search Query")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        limit = st.number_input("Result Limit", min_value=1, max_value=100, value=5)
+        lang = st.text_input("Language Code", value="en")
+        timeout = st.number_input("Timeout (ms)", value=60000, min_value=1000, step=1000)
+    with col2:
+        country = st.text_input("Country Code", value="us")
+        location = st.text_input("Location")
+        tbs = st.text_input("Time-based Search (tbs)")
+    
+    # Scrape options
+    scrape_options = {}
+    with st.expander("Scrape Options"):
+        col1, col2 = st.columns(2)
+        with col1:
+            scrape_options["onlyMainContent"] = st.checkbox("Only Main Content", value=True, key="search_only_main_content")
+            scrape_options["mobile"] = st.checkbox("Mobile", value=False, key="search_mobile")
+            scrape_options["blockAds"] = st.checkbox("Block Ads", value=True, key="search_block_ads")
+        with col2:
+            scrape_options["waitFor"] = st.number_input("Wait For (ms)", value=1000, min_value=0, key="search_wait_for")
+            scrape_options["removeBase64Images"] = st.checkbox("Remove Base64 Images", value=True, key="search_remove_base64_images")
+    
+    if st.button("Search"):
+        if not query:
+            st.error("Please enter a search query")
+        else:
+            with st.spinner("Searching..."):
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {settings['api_key']}",
+                }
+                
+                payload = {
+                    "query": query,
+                    "limit": limit,
+                    "tbs": tbs if tbs else None,
+                    "lang": lang,
+                    "country": country,
+                    "location": location if location else None,
+                    "timeout": timeout,
+                    "scrapeOptions": scrape_options
+                }
+                
+                try:
+                    response = requests.post(
+                        f"{settings['api_url']}/v1/search",
+                        headers=headers,
+                        json=payload,
+                    )
+                    
+                    if response.status_code == 200:
+                        search_results = response.json()
+                        st.session_state.search_results = search_results
+                        st.success(f"Found {len(search_results.get('data', []))} results!")
+                    else:
+                        st.error(f"Error: {response.status_code} - {response.text}")
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+    
+    # Display search results
+    if st.session_state.get("search_results"):
+        st.markdown("<div class='sub-header'>Search Results</div>", unsafe_allow_html=True)
+        st.markdown("<div class='result-area'>", unsafe_allow_html=True)
+        
+        results = st.session_state.search_results.get("data", [])
+        for i, result in enumerate(results):
+            st.markdown(f"### Result {i+1}")
+            
+            # Display metadata
+            if "metadata" in result:
+                st.markdown("#### Metadata")
+                st.json(result["metadata"])
+            
+            # Display content
+            if "markdown" in result:
+                st.markdown("#### Markdown")
+                st.markdown(result["markdown"])
+            
+            if "html" in result:
+                st.markdown("#### HTML")
+                st.code(result["html"], language="html")
+            
+            if "rawHtml" in result:
+                st.markdown("#### Raw HTML")
+                st.code(result["rawHtml"], language="html")
+            
+            if i < len(results) - 1:
+                st.markdown("---")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # Add footer
 st.markdown("---")
