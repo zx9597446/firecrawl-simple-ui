@@ -538,7 +538,7 @@ with tab3:
     
     col1, col2 = st.columns(2)
     with col1:
-        limit = st.number_input("Result Limit", min_value=1, max_value=100, value=5, key="search_limit")
+        limit = st.number_input("Result Limit", min_value=1, max_value=100, value=10, key="search_limit")
         lang = st.text_input("Language Code", value="zh", key="search_lang")
         timeout = st.number_input("Timeout (ms)", value=60000, min_value=1000, step=1000, key="search_timeout")
     with col2:
