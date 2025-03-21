@@ -154,9 +154,9 @@ with tab1:
             mobile = st.checkbox("Mobile", value=False)
             block_ads = st.checkbox("Block Ads", value=True)
         with col2:
-            wait_for = st.number_input("Wait For (ms)", value=2000, min_value=0, help="等待页面加载完成的时间（毫秒）。简单页面可以设为0，复杂页面建议1000-5000ms")
+            wait_for = st.number_input("Wait For (ms)", value=2000, min_value=0, help="等待页面加载完成的时间（毫秒）。简单页面可以设为0，复杂页面建议1000-5000ms", key="single_wait_for")
             timeout = st.number_input(
-                "Timeout (ms)", value=60000, min_value=1000, step=1000
+                "Timeout (ms)", value=60000, min_value=1000, step=1000, key="single_timeout"
             )
             remove_base64_images = st.checkbox("Remove Base64 Images", value=True)
 
@@ -321,7 +321,7 @@ with tab2:
                 value=60000,
                 min_value=1000,
                 step=1000,
-                key="batch_timeout",
+                key="batch_timeout_input",
             )
             batch_remove_base64_images = st.checkbox(
                 "Remove Base64 Images", value=True, key="batch_remove_base64_images"
@@ -541,8 +541,8 @@ with tab4:
     
     col1, col2 = st.columns(2)
     with col1:
-        limit = st.number_input("Max Links", min_value=1, max_value=5000, value=100, help="Maximum number of links to return (max 5000)")
-        timeout = st.number_input("Timeout (ms)", value=60000, min_value=1000, step=1000)
+        limit = st.number_input("Max Links", min_value=1, max_value=5000, value=100, help="Maximum number of links to return (max 5000)", key="map_limit")
+        timeout = st.number_input("Timeout (ms)", value=60000, min_value=1000, step=1000, key="map_timeout")
     with col2:
         ignore_sitemap = st.checkbox("Ignore Sitemap", value=True)
         sitemap_only = st.checkbox("Sitemap Only", value=False)
