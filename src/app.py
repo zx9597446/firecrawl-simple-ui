@@ -56,6 +56,8 @@ if "batch_status" not in st.session_state:
     st.session_state.batch_status = {}
 if "search_results" not in st.session_state:
     st.session_state.search_results = None
+if "map_result" not in st.session_state:
+    st.session_state.map_result = None
 
 # Function to load settings from local storage
 def load_settings():
@@ -126,7 +128,7 @@ def handle_batch_completion(batch_id):
     return False
 
 # Tabs for different functionalities
-tab1, tab2, tab3 = st.tabs(["Single URL Scrape", "Batch Scrape", "Search"])
+tab1, tab2, tab3, tab4 = st.tabs(["Single URL Scrape", "Batch Scrape", "Search", "Map"])
 
 # Single URL Scrape
 with tab1:
@@ -528,6 +530,100 @@ with tab2:
                         )
             else:
                 st.error("Please enter a batch job ID")
+
+# Map Tab
+with tab4:
+    st.markdown("<div class='sub-header'>Map Website Links</div>", unsafe_allow_html=True)
+    
+    # Map parameters
+    url = st.text_input("Website URL")
+    search = st.text_input("Search Query (optional)")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        limit = st.number_input("Max Links", min_value=1, max_value=5000, value=100, help="Maximum number of links to return (max 5000)")
+        timeout = st.number_input("Timeout (ms)", value=60000, min_value=1000, step=1000)
+    with col2:
+        ignore_sitemap = st.checkbox("Ignore Sitemap", value=True)
+        sitemap_only = st.checkbox("Sitemap Only", value=False)
+        include_subdomains = st.checkbox("Include Subdomains", value=False)
+    
+    if st.button("Map Website"):
+        if not url:
+            st.error("Please enter a website URL")
+        else:
+            with st.spinner("Mapping website..."):
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {settings['api_key']}",
+                }
+                
+                payload = {
+                    "url": url,
+                    "search": search if search else "",
+                    "ignoreSitemap": ignore_sitemap,
+                    "sitemapOnly": sitemap_only,
+                    "includeSubdomains": include_subdomains,
+                    "limit": limit,
+                    "timeout": timeout
+                }
+                
+                try:
+                    response = requests.post(
+                        f"{settings['api_url']}/v1/map",
+                        headers=headers,
+                        json=payload,
+                    )
+                    
+                    if response.status_code == 200:
+                        map_result = response.json()
+                        st.session_state.map_result = map_result
+                        st.success(f"Found {len(map_result.get('links', []))} links!")
+                    else:
+                        st.error(f"Error: {response.status_code} - {response.text}")
+                except Exception as e:
+                    st.error(f"Error: {str(e)}")
+    
+    # Display map results
+    if st.session_state.get("map_result"):
+        st.markdown("<div class='sub-header'>Map Results</div>", unsafe_allow_html=True)
+        st.markdown("<div class='result-area'>", unsafe_allow_html=True)
+        
+        links = st.session_state.map_result.get("links", [])
+        
+        # Add download links at the top
+        st.markdown("<div class='download-section'>", unsafe_allow_html=True)
+        st.markdown("### Download Options")
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        
+        # Download links as text file
+        st.markdown(
+            get_download_link(
+                "\n".join(links),
+                f"map_links_{timestamp}.txt",
+                "⬇️ Download Links as Text File",
+            ),
+            unsafe_allow_html=True,
+        )
+        
+        # Download full JSON result
+        st.markdown(
+            get_download_link(
+                st.session_state.map_result,
+                f"map_results_{timestamp}.json",
+                "⬇️ Download Full JSON Results",
+            ),
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+        # Display links in a scrollable container
+        st.markdown("### Found Links")
+        with st.container(height=400):
+            for link in links:
+                st.markdown(f"- [{link}]({link})")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # Search Tab
 with tab3:
