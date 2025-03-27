@@ -3,7 +3,7 @@ import json
 import time
 
 
-def start_crawl(url, api_url, api_key, options=None, auto_check=True, max_retries=30, interval=5):
+def start_crawl(url, api_url, api_key, options=None, auto_check=True, max_retries=9999, interval=5):
     """启动网站爬取任务并自动检查状态
     
     Args:
@@ -12,7 +12,7 @@ def start_crawl(url, api_url, api_key, options=None, auto_check=True, max_retrie
         api_key: API密钥
         options: 可选参数
         auto_check: 是否自动检查状态
-        max_retries: 最大重试次数
+        max_retries: 最大重试次数(默认9999≈13.8小时)
         interval: 检查间隔(秒)
     """
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
@@ -33,7 +33,7 @@ def start_crawl(url, api_url, api_key, options=None, auto_check=True, max_retrie
 
     try:
         # 启动爬取任务
-        response = requests.post(f"{api_url}/v1/crawl", headers=headers, json=data, timeout=30)
+        response = requests.post(f"{api_url}/v1/crawl", headers=headers, json=data)
         if response.status_code != 200:
             print(f"API请求失败，状态码: {response.status_code}, 响应: {response.text}")
             return None
