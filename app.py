@@ -214,23 +214,28 @@ with tab5:
                         )
                         result = response.json()
                         
-                        if result.get('success'):
-                            st.success("研究完成!")
-                            
-                            st.subheader("最终分析")
-                            st.markdown(result['data']['finalAnalysis'])
-                            
-                            st.subheader("来源")
-                            for source in result['data']['sources']:
-                                st.markdown(f"- [{source['title']}]({source['url']})")
-                            
-                            st.download_button(
-                                label="下载完整报告",
-                                data=str(result),
-                                file_name="research_report.json",
-                                mime="application/json"
-                            )
+                        if response.status_code == 200:
+                            if result.get('success', False):
+                                st.success("研究完成!")
+                                
+                                if 'data' in result and 'finalAnalysis' in result['data']:
+                                    st.subheader("最终分析")
+                                    st.markdown(result['data']['finalAnalysis'])
+                                
+                                if 'data' in result and 'sources' in result['data']:
+                                    st.subheader("来源")
+                                    for source in result['data']['sources']:
+                                        st.markdown(f"- [{source.get('title', '无标题')}]({source.get('url', '#')})")
+                                
+                                st.download_button(
+                                    label="下载完整报告",
+                                    data=str(result),
+                                    file_name="research_report.json",
+                                    mime="application/json"
+                                )
+                            else:
+                                st.error(f"研究失败: {result.get('message', '未知错误')}")
                         else:
-                            st.error(f"研究失败: {result.get('message', '未知错误')}")
+                            st.error(f"API请求失败 (状态码 {response.status_code}): {result.get('message', '无错误信息')}")
                     except Exception as e:
                         st.error(f"API请求失败: {str(e)}")
