@@ -1,6 +1,7 @@
 import requests
 
 def map_url(url, search=None, api_url=None, api_key=None):
+    """映射网站URL"""
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json"
