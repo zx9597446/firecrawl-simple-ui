@@ -27,15 +27,11 @@ class AsyncFirecrawlClient:
         if self.session:
             await self.session.close()
             
-    async def scrape(self, url: str, options: Optional[Dict] = None) -> Dict:
+    async def scrape(self, url: str) -> Dict:
         """异步抓取单个URL"""
-        data = {
-            "url": url,
-            "options": options or {}
-        }
         async with self.session.post(
-            f"{self.api_url}/v0/scrape",
-            json=data
+            f"{self.api_url}/v1/scrape",
+            json={"url": url}
         ) as response:
             return await self._handle_response(response)
             

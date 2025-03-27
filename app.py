@@ -20,7 +20,9 @@ st.title("Firecrawl工具集")
 tab1, tab2, tab3 = st.tabs(["批量抓取", "网站映射", "网站爬取"])
 
 with tab1:
-    batch_scrape(API_URL, API_KEY)
+    async def run_batch_scrape():
+        await batch_scrape(API_URL, API_KEY)
+    asyncio.run(run_batch_scrape())
 
 with tab2:
     # 网站映射功能
