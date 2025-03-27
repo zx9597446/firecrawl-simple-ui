@@ -62,7 +62,7 @@ def check_crawl_status(job_id, api_url, api_key):
     """检查爬取任务状态"""
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
 
-    response = requests.get(f"{api_url}/v1/crawl/status/{job_id}", headers=headers)
+    response = requests.get(f"{api_url}/v1/crawl/{job_id}", headers=headers)
     return response.json() if response.status_code == 200 else None
 
 
@@ -92,6 +92,7 @@ def parse_crawl_results(results):
                 "markdown": content.get("markdown", ""),
                 "html": content.get("html", ""),
                 "metadata": content.get("metadata", {}),
+                "word_count": len(content.get("markdown", "")),
             }
         )
     return parsed
