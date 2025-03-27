@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from map import map_url
 from crawl import start_crawl, check_crawl_status, parse_crawl_results
 from batch_scrape import batch_scrape
+from search import search_content
 
 # 加载环境变量
 load_dotenv()
@@ -16,7 +17,7 @@ st.set_page_config(page_title="Firecrawl工具集", layout="wide")
 st.title("Firecrawl工具集")
 
 # 创建标签页
-tab1, tab2, tab3 = st.tabs(["批量抓取", "网站映射", "网站爬取"])
+tab1, tab2, tab3, tab4 = st.tabs(["批量抓取", "网站映射", "网站爬取", "内容搜索"])
 
 with tab1:
     batch_scrape(API_URL, API_KEY)
@@ -165,3 +166,6 @@ with tab3:
             "标题": [r['title'] for r in parsed_results],
             "字数": [r['word_count'] for r in parsed_results]
         })
+
+with tab4:
+    search_content(API_URL, API_KEY)
