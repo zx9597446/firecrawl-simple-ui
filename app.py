@@ -47,7 +47,7 @@ with tab2:
                 with st.spinner("正在映射网站URL..."):
                     result = map_url(url, search if search else None, API_URL, API_KEY)
                     if result:
-                        if result.get('status') == 'success' or result.get('success') == True:
+                        if result.get('status') == 'success' or result.get('success'):
                             links = result.get('links', [])
                             st.success(f"找到 {len(links)} 个URL")
                             st.session_state.mapped_links = links
@@ -93,7 +93,7 @@ with tab3:
         st.subheader("爬取选项")
         col1, col2 = st.columns(2)
         with col1:
-            max_pages = st.number_input("最大页面数", min_value=1, value=10)
+            max_pages = st.number_input("最大页面数", min_value=1, value=100)
             only_main_content = st.checkbox("仅主要内容", value=True)
         with col2:
             include_metadata = st.checkbox("包含元数据", value=False)
@@ -114,7 +114,10 @@ with tab3:
                             "mobile": mobile
                         }
                     }
+                    print(f"正在调用API: URL={url}, API_URL={API_URL}")
+                    print(f"提交的options参数: {options}")
                     result = start_crawl(url, API_URL, API_KEY, options)
+                    print(f"API调用结果: {result}")
                     if result and result.get('jobId'):
                         st.session_state.crawl_job_id = result['jobId']
                         st.session_state.crawl_results = []
