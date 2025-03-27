@@ -77,8 +77,8 @@ def search_content(api_url, api_key):
 
     # 显示结果和操作按钮
     if st.session_state.search_results:
-        # 下载和复制按钮
-        col1, col2 = st.columns(2)
+        # 下载和复制按钮 - 3个按钮排成一行
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.download_button(
                 label="下载JSON",
@@ -88,17 +88,17 @@ def search_content(api_url, api_key):
             )
         with col2:
             if st.session_state.combined_markdown:
+                st.download_button(
+                    label="下载Markdown",
+                    data=st.session_state.combined_markdown,
+                    file_name="search_results.md",
+                    mime="text/markdown"
+                )
+        with col3:
+            if st.session_state.combined_markdown:
                 if st.button("复制Markdown到剪贴板"):
                     pyperclip.copy(st.session_state.combined_markdown)
                     st.success("已复制到剪贴板!")
-
-        if st.session_state.combined_markdown:
-            st.download_button(
-                label="下载Markdown",
-                data=st.session_state.combined_markdown,
-                file_name="search_results.md",
-                mime="text/markdown"
-            )
         
         st.markdown("### 搜索结果")
         if st.session_state.combined_markdown:
