@@ -21,9 +21,9 @@ def search_content(api_url, api_key):
         col1, col2 = st.columns(2)
         with col1:
             limit = st.number_input("结果数量", min_value=1, max_value=10, value=5)
-            lang = st.text_input("语言代码", value="en")
+            lang = st.text_input("语言代码", value="zh")
         with col2:
-            country = st.text_input("国家代码", value="us")
+            country = st.text_input("国家代码", value="cn")
             scrape_markdown = st.checkbox("获取完整Markdown", value=True)
         
         submitted = st.form_submit_button("开始搜索")
