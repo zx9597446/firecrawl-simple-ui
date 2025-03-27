@@ -1,8 +1,9 @@
 import streamlit as st
-import requests
 import pyperclip
+import asyncio
+from async_utils import AsyncFirecrawlClient
 
-def batch_scrape(api_url, api_key):
+async def batch_scrape(api_url, api_key):
     # 初始化session_state
     if 'combined_markdown' not in st.session_state:
         st.session_state.combined_markdown = ""
@@ -38,47 +39,37 @@ def batch_scrape(api_url, api_key):
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 
-                for i, url in enumerate(url_list):
-                    try:
-                        status_text.text(f"正在处理: {url} ({i+1}/{len(url_list)})")
-                        progress_bar.progress((i+1)/len(url_list))
-                        
-                        # 准备请求数据
-                        data = {
-                            "url": url,
-                            "options": {
-                                "pageOptions": {
-                                    "onlyMainContent": only_main_content,
-                                    "includeMetadata": include_metadata,
-                                    "waitFor": wait_for,
-                                    "mobile": mobile
-                                }
-                            }
-                        }
-                        
-                        # 调用Firecrawl API
-                        headers = {
-                            "Authorization": f"Bearer {api_key}",
-                            "Content-Type": "application/json"
-                        }
-                        
-                        response = requests.post(
-                            f"{api_url}/v0/scrape",
-                            headers=headers,
-                            json=data
-                        )
-                        
-                        if response.status_code == 200:
-                            result = response.json()
-                            if 'markdown' in result.get('data', {}):
-                                all_markdown.append(f"# {url}\n\n{result['data']['markdown']}\n\n---\n")
-                            else:
-                                st.warning(f"{url}: 未返回markdown内容")
-                        else:
-                            st.error(f"{url}: API请求失败 - {response.status_code}")
+                # 准备抓取选项
+                options = {
+                    "pageOptions": {
+                        "onlyMainContent": only_main_content,
+                        "includeMetadata": include_metadata,
+                        "waitFor": wait_for,
+                        "mobile": mobile
+                    }
+                }
+                
+                # 异步处理所有URL
+                async with AsyncFirecrawlClient(api_url, api_key) as client:
+                    tasks = [client.scrape(url, options) for url in url_list]
+                    
+                    for i, task in enumerate(asyncio.as_completed(tasks)):
+                        try:
+                            result = await task
+                            status_text.text(f"正在处理: {i+1}/{len(url_list)}")
+                            progress_bar.progress((i+1)/len(url_list))
                             
-                    except Exception as e:
-                        st.error(f"{url}: 发生错误 - {str(e)}")
+                            if isinstance(result, dict) and not result.get('error'):
+                                if 'markdown' in result.get('data', {}):
+                                    url = result['data'].get('url', url_list[i])
+                                    all_markdown.append(f"# {url}\n\n{result['data']['markdown']}\n\n---\n")
+                                else:
+                                    st.warning(f"URL {i+1}: 未返回markdown内容")
+                            else:
+                                st.error(f"URL {i+1}: 请求失败 - {result.get('message', '未知错误')}")
+                                
+                        except Exception as e:
+                            st.error(f"URL {i+1}: 发生错误 - {str(e)}")
                 
                 if all_markdown:
                     st.session_state.combined_markdown = "\n".join(all_markdown)
