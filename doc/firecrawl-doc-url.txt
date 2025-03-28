@@ -1,0 +1,10 @@
+https://docs.firecrawl.dev/api-reference/endpoint/scrape
+https://docs.firecrawl.dev/api-reference/endpoint/batch-scrape
+https://docs.firecrawl.dev/api-reference/endpoint/batch-scrape-get
+https://docs.firecrawl.dev/api-reference/endpoint/crawl-post
+https://docs.firecrawl.dev/api-reference/endpoint/crawl-get
+https://docs.firecrawl.dev/api-reference/endpoint/map
+https://docs.firecrawl.dev/api-reference/endpoint/extract
+https://docs.firecrawl.dev/api-reference/endpoint/extract-get
+https://docs.firecrawl.dev/features/alpha/llmstxt
+https://docs.firecrawl.dev/features/alpha/deep-research
