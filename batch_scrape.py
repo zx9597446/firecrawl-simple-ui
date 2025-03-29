@@ -107,8 +107,8 @@ with st.expander("高级抓取选项"):
         remove_base64_images = st.checkbox("移除Base64图片", value=False)
         
     with col2:
-        wait_for = st.number_input("等待时间(ms)", min_value=0, value=0)
-        timeout = st.number_input("超时时间(ms)", min_value=1000, value=30000)
+        wait_for = st.number_input("等待时间(ms)", min_value=0, value=3000)
+        timeout = st.number_input("超时时间(ms)", min_value=1000, value=60000)
         mobile = st.checkbox("移动设备模式", value=False)
         skip_tls_verification = st.checkbox("跳过TLS验证", value=False)
         
