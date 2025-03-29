@@ -156,13 +156,11 @@ if st.session_state.job_id:
     st.divider()
     st.subheader("抓取结果")
     
-    if st.button("检查进度") or st.session_state.get('auto_poll', False):
-        st.session_state.auto_poll = True
-        with st.spinner("获取结果中..."):
-            results = poll_job_status(st.session_state.job_id)
+    with st.spinner("获取结果中..."):
+        results = poll_job_status(st.session_state.job_id)
             
         if results:
-            st.session_state.results = results
+        st.session_state.results = results
             st.success("抓取完成！")
             
             # 合并所有markdown内容
