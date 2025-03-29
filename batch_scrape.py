@@ -191,29 +191,57 @@ if st.session_state.job_id:
             st.session_state.results = results
             st.success("抓取完成！")
             
-            # 合并所有markdown内容
-            combined_md = "\n\n---\n\n".join(
-                f"# {item['metadata']['sourceURL']}\n\n{item['markdown']}" 
-                for item in results["data"]
-            )
+            if not results.get("data"):
+                st.warning("没有获取到任何结果数据")
+                return
             
-            # 下载合并的Markdown按钮
-            st.download_button(
-                label="下载全部Markdown",
-                data=combined_md,
-                file_name="combined_results.md",
-                key="dl_all"
-            )
-            
-            # 显示并下载单个Markdown
-            for idx, item in enumerate(results["data"]):
-                with st.expander(f"结果 {idx+1}: {item['metadata']['sourceURL']}"):
-                    st.code(item["markdown"], language="markdown")
+            # 合并所有有效内容
+            valid_results = []
+            for item in results["data"]:
+                if not item:
+                    continue
                     
-                    # 下载按钮
-                    st.download_button(
-                        label="下载此Markdown",
-                        data=item["markdown"],
-                        file_name=f"content_{idx+1}.md",
-                        key=f"dl_{idx}"
-                    )
+                source_url = item.get("metadata", {}).get("sourceURL", "未知URL")
+                if item.get("error"):
+                    valid_results.append(f"# {source_url}\n\n错误: {item['error']}")
+                elif "markdown" in item:
+                    valid_results.append(f"# {source_url}\n\n{item['markdown']}")
+                elif "html" in item:
+                    valid_results.append(f"# {source_url}\n\nHTML内容已获取但未显示")
+                else:
+                    valid_results.append(f"# {source_url}\n\n无可用内容")
+            
+            if valid_results:
+                combined_md = "\n\n---\n\n".join(valid_results)
+                
+                # 下载合并的Markdown按钮
+                st.download_button(
+                    label="下载全部结果",
+                    data=combined_md,
+                    file_name="combined_results.md",
+                    key="dl_all"
+                )
+                
+                # 显示并下载单个结果
+                for idx, item in enumerate(results["data"]):
+                    if not item:
+                        continue
+                        
+                    source_url = item.get("metadata", {}).get("sourceURL", f"结果 {idx+1}")
+                    with st.expander(f"{source_url} - 状态码: {item.get('metadata', {}).get('statusCode', '未知')}"):
+                        if item.get("error"):
+                            st.error(f"错误: {item['error']}")
+                        elif "markdown" in item:
+                            st.code(item["markdown"], language="markdown")
+                            st.download_button(
+                                label="下载此内容",
+                                data=item["markdown"],
+                                file_name=f"content_{idx+1}.md",
+                                key=f"dl_{idx}"
+                            )
+                        elif "html" in item:
+                            st.warning("获取到HTML内容但未显示")
+                        else:
+                            st.warning("无可用内容")
+            else:
+                st.warning("没有有效的抓取结果")
