@@ -40,11 +40,11 @@ def submit_batch_job(urls, options):
         payload["includeTags"] = options["include_tags"].split(',')
     if options["exclude_tags"]:
         payload["excludeTags"] = options["exclude_tags"].split(',')
-    if options["custom_headers"]:
-        try:
-            payload["headers"] = json.loads(options["custom_headers"])
-        except json.JSONDecodeError:
-            st.warning("自定义头必须是有效的JSON格式")
+    # 添加位置设置
+    payload["location"] = {
+        "country": options["location_country"],
+        "languages": [lang.strip() for lang in options["location_languages"].split(",")]
+    }
     
     try:
         response = requests.post(
@@ -103,7 +103,7 @@ with st.expander("高级抓取选项"):
         )
         only_main_content = st.checkbox("仅主要内容", value=True)
         block_ads = st.checkbox("屏蔽广告", value=True)
-        ignore_invalid_urls = st.checkbox("忽略无效URL", value=False)
+        ignore_invalid_urls = st.checkbox("忽略无效URL", value=True)
         remove_base64_images = st.checkbox("移除Base64图片", value=False)
         
     with col2:
@@ -114,7 +114,19 @@ with st.expander("高级抓取选项"):
         
     include_tags = st.text_input("包含标签(逗号分隔)")
     exclude_tags = st.text_input("排除标签(逗号分隔)")
-    custom_headers = st.text_area("自定义请求头(JSON格式)", value='{"User-Agent": "Mozilla/5.0"}')
+    
+    st.subheader("位置设置")
+    location_country = st.selectbox(
+        "国家代码",
+        ["CN", "US", "AU", "DE", "JP"],
+        index=0,
+        help="ISO 3166-1 alpha-2 country code (e.g., 'US', 'AU', 'DE', 'JP')"
+    )
+    location_languages = st.text_input(
+        "语言偏好",
+        value="zh-CN,zh",
+        help="Preferred languages and locales for the request in order of priority"
+    )
 
 # URL输入框
 urls = st.text_area(
@@ -137,7 +149,8 @@ if st.button("开始抓取") and urls:
         "skip_tls_verification": skip_tls_verification,
         "include_tags": include_tags,
         "exclude_tags": exclude_tags,
-        "custom_headers": custom_headers
+        "location_country": location_country,
+        "location_languages": location_languages
     }
     
     with st.spinner("提交任务中..."):
