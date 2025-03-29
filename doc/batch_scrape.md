@@ -216,4 +216,108 @@ curl --request GET \
       }
     }
   ]
+}# Firecrawl Batch Scraper
+
+## API Reference
+
+### Submit Batch Job
+```bash
+curl --request POST \
+  --url https://api.firecrawl.dev/v1/batch/scrape \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '{
+  "urls": ["<string>"],
+  "webhook": {
+    "url": "<string>",
+    "headers": {},
+    "metadata": {},
+    "events": ["completed"]
+  },
+  "ignoreInvalidURLs": false,
+  "formats": ["markdown"],
+  "onlyMainContent": true,
+  "blockAds": true
+}'
+```
+
+### Response (Returns job ID)
+```json
+{
+  "success": true,
+  "id": "<string>",
+  "url": "<string>",
+  "invalidURLs": ["<string>"]
 }
+```
+
+### Get Job Results
+```bash
+curl --request GET \
+  --url https://api.firecrawl.dev/v1/batch/scrape/{id} \
+  --header 'Authorization: Bearer <token>'
+```
+
+### Results Response
+```json
+{
+  "status": "<string>",
+  "total": 123,
+  "completed": 123,
+  "creditsUsed": 123,
+  "expiresAt": "2023-11-07T05:31:56Z",
+  "next": "<string>",
+  "data": [
+    {
+      "markdown": "<string>",
+      "metadata": {
+        "title": "<string>",
+        "description": "<string>",
+        "sourceURL": "<string>",
+        "statusCode": 123,
+        "error": "<string>"
+      }
+    }
+  ]
+}
+```
+
+## Usage Instructions
+
+### Prerequisites
+1. Create `.env` file:
+```bash
+FIRECRAWL_API_URL=https://api.firecrawl.dev/v1
+FIRECRAWL_API_KEY=your_api_key_here
+```
+
+2. Install dependencies:
+```bash
+pip install streamlit requests python-dotenv
+```
+
+### Running the Application
+```bash
+streamlit run batch_scrape.py
+```
+
+### Features
+- Batch URL processing
+- Real-time progress tracking
+- Markdown content extraction
+- Error handling and validation
+- Interactive results preview
+- One-click downloads
+
+### Best Practices
+1. Start with small batches (5-10 URLs) to test
+2. Monitor your API credit usage
+3. Check the `expiresAt` field for result retention period
+4. Use webhooks for large-scale processing
+5. Implement retry logic for failed requests
+
+### Troubleshooting
+- **Invalid URLs**: Check the `invalidURLs` in response
+- **Timeout Errors**: Increase the `timeout` parameter
+- **Authentication Errors**: Verify your API key
+- **Empty Results**: Try disabling `onlyMainContent`
