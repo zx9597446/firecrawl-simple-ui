@@ -55,6 +55,23 @@ def get_job_results(job_id):
         st.error(f"获取结果失败: {str(e)}")
         return None
 
+def poll_job_status(job_id):
+    """轮询任务状态直到完成"""
+    placeholder = st.empty()
+    while True:
+        results = get_job_results(job_id)
+        if not results:
+            return None
+            
+        if results["status"] == "completed":
+            placeholder.empty()
+            return results
+            
+        # 更新进度
+        progress = results["completed"] / results["total"]
+        placeholder.progress(progress, text=f"处理中... 完成 {results['completed']}/{results['total']}")
+        sleep(2)  # 每2秒检查一次
+
 # Streamlit界面
 st.title("🔥 Firecrawl 批量抓取工具")
 
@@ -83,27 +100,38 @@ if st.session_state.job_id:
     st.divider()
     st.subheader("抓取结果")
     
-    if st.button("检查进度"):
+    if st.button("检查进度") or st.session_state.get('auto_poll', False):
+        st.session_state.auto_poll = True
         with st.spinner("获取结果中..."):
-            results = get_job_results(st.session_state.job_id)
+            results = poll_job_status(st.session_state.job_id)
             
         if results:
-            if results["status"] == "completed":
-                st.session_state.results = results
-                st.success("抓取完成！")
-                
-                # 显示并下载Markdown
-                for idx, item in enumerate(results["data"]):
-                    with st.expander(f"结果 {idx+1}: {item['metadata']['sourceURL']}"):
-                        st.code(item["markdown"], language="markdown")
-                        
-                        # 下载按钮
-                        st.download_button(
-                            label="下载Markdown",
-                            data=item["markdown"],
-                            file_name=f"content_{idx+1}.md",
-                            key=f"dl_{idx}"
-                        )
-            else:
-                st.info(f"处理中... 完成 {results['completed']}/{results['total']}")
-                st.progress(results["completed"] / results["total"])
+            st.session_state.results = results
+            st.success("抓取完成！")
+            
+            # 合并所有markdown内容
+            combined_md = "\n\n---\n\n".join(
+                f"# {item['metadata']['sourceURL']}\n\n{item['markdown']}" 
+                for item in results["data"]
+            )
+            
+            # 下载合并的Markdown按钮
+            st.download_button(
+                label="下载全部Markdown",
+                data=combined_md,
+                file_name="combined_results.md",
+                key="dl_all"
+            )
+            
+            # 显示并下载单个Markdown
+            for idx, item in enumerate(results["data"]):
+                with st.expander(f"结果 {idx+1}: {item['metadata']['sourceURL']}"):
+                    st.code(item["markdown"], language="markdown")
+                    
+                    # 下载按钮
+                    st.download_button(
+                        label="下载此Markdown",
+                        data=item["markdown"],
+                        file_name=f"content_{idx+1}.md",
+                        key=f"dl_{idx}"
+                    )
