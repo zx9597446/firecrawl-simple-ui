@@ -173,19 +173,12 @@ if st.button("开始抓取") and urls:
         
     if not result:
         st.error("任务提交失败: 无响应")
-        return
-        
-    if result.get("error"):
+    elif result.get("error"):
         st.error(f"任务提交失败: {result['error']}")
-        return
-        
-    if not result.get("success"):
+    elif not result.get("success"):
         st.error(f"任务提交失败: {result.get('message', '未知错误')}")
-        return
-        
-    if not result.get("id"):
+    elif not result.get("id"):
         st.error("任务提交失败: 未返回作业ID")
-        return
         
     st.session_state.job_id = result["id"]
     st.success(f"任务已提交！作业ID: {result['id']}")
