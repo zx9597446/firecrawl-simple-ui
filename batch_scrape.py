@@ -42,12 +42,6 @@ def submit_batch_job(urls, options):
         payload["excludeTags"] = options["exclude_tags"].split(',')
 
 
-    # 添加位置设置
-    payload["location"] = {
-        "country": options["location_country"],
-        "languages": [lang.strip() for lang in options["location_languages"].split(",")]
-    }
-    
     try:
         response = requests.post(
             f"{API_URL}/batch/scrape",
@@ -118,18 +112,6 @@ with st.expander("高级抓取选项"):
     exclude_tags = st.text_input("排除标签(逗号分隔)")
 
 
-    st.subheader("位置设置")
-    location_country = st.selectbox(
-        "国家代码",
-        ["CN", "US", "AU", "DE", "JP"],
-        index=0,
-        help="ISO 3166-1 alpha-2 country code (e.g., 'US', 'AU', 'DE', 'JP')"
-    )
-    location_languages = st.text_input(
-        "语言偏好",
-        value="zh-CN,zh",
-        help="Preferred languages and locales for the request in order of priority"
-    )
 
 # URL输入框
 urls = st.text_area(
@@ -152,8 +134,6 @@ if st.button("开始抓取") and urls:
         "skip_tls_verification": skip_tls_verification,
         "include_tags": include_tags,
         "exclude_tags": exclude_tags,
-        "location_country": location_country,
-        "location_languages": location_languages
     }
     
     with st.spinner("提交任务中..."):

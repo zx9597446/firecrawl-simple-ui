@@ -39,12 +39,6 @@ curl --request POST \
     "systemPrompt": "<string>",
     "prompt": "<string>"
   },
-  "location": {
-    "country": "US",
-    "languages": [
-      "en-US"
-    ]
-  },
   "removeBase64Images": true,
   "blockAds": true,
   "proxy": "basic"
