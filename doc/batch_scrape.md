@@ -39,13 +39,6 @@ curl --request POST \
     "systemPrompt": "<string>",
     "prompt": "<string>"
   },
-  "actions": [
-    {
-      "type": "wait",
-      "milliseconds": 2,
-      "selector": "#my-element"
-    }
-  ],
   "location": {
     "country": "US",
     "languages": [
