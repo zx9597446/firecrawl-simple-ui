@@ -40,6 +40,13 @@ def submit_batch_job(urls, options):
         payload["includeTags"] = options["include_tags"].split(',')
     if options["exclude_tags"]:
         payload["excludeTags"] = options["exclude_tags"].split(',')
+
+    # 添加页面操作
+    try:
+        payload["actions"] = json.loads(options["actions"])
+    except json.JSONDecodeError:
+        st.error("页面操作必须是有效的JSON格式")
+
     # 添加位置设置
     payload["location"] = {
         "country": options["location_country"],
@@ -112,9 +119,16 @@ with st.expander("高级抓取选项"):
         mobile = st.checkbox("移动设备模式", value=False)
         skip_tls_verification = st.checkbox("跳过TLS验证", value=False)
         
-    include_tags = st.text_input("包含标签(逗号分隔)")
+    include_tags = st.text_input("包含标签(逗号分隔)") 
     exclude_tags = st.text_input("排除标签(逗号分隔)")
-    
+
+    st.subheader("页面操作")
+    actions = st.text_area(
+        "页面操作(JSON格式)",
+        value='[]',
+        help='例如: [{"type": "wait", "milliseconds": 2000}, {"type": "click", "selector": "#load-more"}]'
+    )
+
     st.subheader("位置设置")
     location_country = st.selectbox(
         "国家代码",
@@ -149,6 +163,7 @@ if st.button("开始抓取") and urls:
         "skip_tls_verification": skip_tls_verification,
         "include_tags": include_tags,
         "exclude_tags": exclude_tags,
+        "actions": actions,
         "location_country": location_country,
         "location_languages": location_languages
     }
