@@ -160,7 +160,7 @@ if st.session_state.job_id:
         results = poll_job_status(st.session_state.job_id)
             
         if results:
-        st.session_state.results = results
+            st.session_state.results = results
             st.success("抓取完成！")
             
             # 合并所有markdown内容
