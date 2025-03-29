@@ -193,7 +193,6 @@ if st.session_state.job_id:
             
             if not results.get("data"):
                 st.warning("没有获取到任何结果数据")
-                continue
             
             # 合并所有有效内容
             valid_results = []
