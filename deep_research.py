@@ -55,24 +55,37 @@ def get_job_results(job_id):
         return None
 
 def poll_job_status(job_id):
-    """轮询任务状态直到完成"""
+    """轮询任务状态直到完成或失败"""
     placeholder = st.empty()
-    while True:
+    max_attempts = 30  # 最大尝试次数 (约1分钟)
+    attempts = 0
+    
+    while attempts < max_attempts:
         results = get_job_results(job_id)
         if not results:
+            placeholder.error("无法获取任务状态")
             return None
             
-        if results["status"] == "completed":
+        status = results.get("status")
+        if status == "completed":
             placeholder.empty()
             return results
+        elif status == "failed":
+            placeholder.error(f"研究任务失败: {results.get('message', '未知错误')}")
+            return None
             
         # 显示当前活动状态
         current_activity = results.get("data", {}).get("activities", [{}])[-1]
         status_text = f"处理中...\n当前深度: {results.get('currentDepth', 0)}/{results.get('maxDepth', 0)}\n"
         status_text += f"活动: {current_activity.get('type', 'unknown')} - {current_activity.get('message', '')}"
+        status_text += f"\n尝试 {attempts+1}/{max_attempts}"
         
         placeholder.text(status_text)
         sleep(2)  # 每2秒检查一次
+        attempts += 1
+        
+    placeholder.error("研究任务超时")
+    return None
 
 # Streamlit界面
 st.title("🔍 Firecrawl 深度研究工具")
