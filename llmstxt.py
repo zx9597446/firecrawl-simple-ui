@@ -121,7 +121,7 @@ if st.session_state.job_id:
             if not result:
                 st.error("无法获取任务状态")
                 st.session_state.job_id = None
-                return
+                st.rerun()
             
             status = result.get("status")
             
