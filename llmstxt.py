@@ -90,8 +90,17 @@ if st.button("开始生成") and url:
     elif not result.get("success"):
         st.error(f"任务提交失败: {result.get('message', '未知错误')}")
     else:
-        st.session_state.job_id = result.get("jobId")
-        st.success("任务已提交，正在处理...")
+        job_id = result.get("jobId")
+        if job_id:
+            st.session_state.job_id = job_id
+            st.success(f"任务已提交 (ID: {job_id})")
+            # Trigger immediate status check
+            st.rerun()
+        else:
+            # Handle immediate completion case
+            if result.get("data"):
+                st.session_state.results = result
+                st.success("处理完成！")
 
 # 轮询结果
 if st.session_state.job_id:
@@ -103,9 +112,19 @@ if st.session_state.job_id:
             st.session_state.results = result
             st.session_state.job_id = None
             st.success("处理完成！")
+            # Show processed URLs count if available
+            if result.get('data', {}).get('processedUrls'):
+                st.info(f"已处理URL数量: {len(result['data']['processedUrls'])}")
         elif result.get("status") == "processing":
-            st.warning(f"任务处理中...\n当前进度:\n{result.get('data', {}).get('llmstxt', '')}")
-            st.session_state.results = result  # Store partial results
+            st.warning("任务处理中...")
+            # Show partial results if available
+            if result.get('data', {}).get('llmstxt'):
+                st.subheader("当前进度")
+                st.code(result['data']['llmstxt'], language="markdown")
+            st.session_state.results = result
+            # Add automatic refresh after 5 seconds
+            sleep(5)
+            st.rerun()
         elif result.get("status") == "failed":
             st.error(f"处理失败: {result.get('message', '未知错误')}")
             st.session_state.job_id = None
