@@ -72,7 +72,7 @@ st.title("📄 LLMs.txt 生成工具")
 with st.expander("生成选项"):
     col1, col2 = st.columns(2)
     with col1:
-        max_urls = st.number_input("最大URL数量", min_value=1, max_value=100, value=5, 
+        max_urls = st.number_input("最大URL数量", min_value=1, max_value=100, value=100,
                                  help="建议值1-100，过大可能导致处理时间过长")
     with col2:
         show_full_text = st.checkbox("显示完整文本", value=True)
