@@ -96,45 +96,51 @@ if st.button("开始生成") and url:
 # 轮询结果
 if st.session_state.job_id:
     with st.spinner("等待处理完成..."):
-        while True:
-            result = get_job_results(st.session_state.job_id)
-            if not result:
-                break
-            if result.get("status") == "completed":
-                st.session_state.results = result
-                st.session_state.job_id = None
-                st.success("处理完成！")
-                break
-            elif result.get("status") == "failed":
-                st.error(f"处理失败: {result.get('message', '未知错误')}")
-                break
-            sleep(2)
+        result = get_job_results(st.session_state.job_id)
+        if not result:
+            st.error("无法获取任务状态")
+        elif result.get("status") == "completed":
+            st.session_state.results = result
+            st.session_state.job_id = None
+            st.success("处理完成！")
+        elif result.get("status") == "processing":
+            st.warning(f"任务处理中...\n当前进度:\n{result.get('data', {}).get('llmstxt', '')}")
+            st.session_state.results = result  # Store partial results
+        elif result.get("status") == "failed":
+            st.error(f"处理失败: {result.get('message', '未知错误')}")
+            st.session_state.job_id = None
 
 # 结果显示和下载
 if st.session_state.results:
     st.divider()
-    st.subheader("生成结果")
-    
+    status = st.session_state.results.get("status")
     data = st.session_state.results.get("data", {})
     
-    if data.get("llmstxt"):
-        st.subheader("LLMs.txt")
-        st.code(data["llmstxt"], language="markdown")
-        
-        st.download_button(
-            label="下载LLMs.txt",
-            data=data["llmstxt"],
-            file_name="llms.txt",
-            mime="text/plain"
-        )
+    if status == "processing":
+        st.warning("任务仍在处理中，部分结果如下:")
+        if data.get("llmstxt"):
+            st.subheader("当前LLMs.txt")
+            st.code(data["llmstxt"], language="markdown")
+        st.button("刷新状态", key="refresh_status")
     
-    if data.get("llmsfulltxt"):
-        st.subheader("完整版LLMs.txt")
-        st.code(data["llmsfulltxt"], language="markdown")
+    elif status == "completed":
+        st.success("处理完成！")
+        if data.get("llmstxt"):
+            st.subheader("LLMs.txt")
+            st.code(data["llmstxt"], language="markdown")
+            st.download_button(
+                label="下载LLMs.txt",
+                data=data["llmstxt"],
+                file_name="llms.txt",
+                mime="text/plain"
+            )
         
-        st.download_button(
-            label="下载完整版LLMs.txt",
-            data=data["llmsfulltxt"],
-            file_name="llms-full.txt",
-            mime="text/plain"
-        )
+        if data.get("llmsfulltxt"):
+            st.subheader("完整版LLMs.txt")
+            st.code(data["llmsfulltxt"], language="markdown")
+            st.download_button(
+                label="下载完整版LLMs.txt",
+                data=data["llmsfulltxt"],
+                file_name="llms-full.txt",
+                mime="text/plain"
+            )
