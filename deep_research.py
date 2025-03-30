@@ -57,7 +57,7 @@ def get_job_results(job_id):
 def poll_job_status(job_id):
     """轮询任务状态直到完成或失败"""
     placeholder = st.empty()
-    max_attempts = 30  # 最大尝试次数 (约1分钟)
+    max_attempts = 60  # 最大尝试次数 (约10分钟，每10秒检查一次)
     attempts = 0
     
     while attempts < max_attempts:
@@ -81,7 +81,7 @@ def poll_job_status(job_id):
         status_text += f"\n尝试 {attempts+1}/{max_attempts}"
         
         placeholder.text(status_text)
-        sleep(2)  # 每2秒检查一次
+        sleep(10)  # 每10秒检查一次
         attempts += 1
         
     placeholder.error("研究任务超时")
