@@ -1,9 +1,10 @@
 import os
-import time
 import streamlit as st
 from dotenv import load_dotenv
 from map import map_url
-from crawl import start_crawl, check_crawl_status, parse_crawl_results
+from crawl import parse_crawl_results
+from async_utils import AsyncFirecrawlClient
+import asyncio
 from batch_scrape import batch_scrape
 
 # 加载环境变量
@@ -19,7 +20,9 @@ st.title("Firecrawl工具集")
 tab1, tab2, tab3 = st.tabs(["批量抓取", "网站映射", "网站爬取"])
 
 with tab1:
-    batch_scrape(API_URL, API_KEY)
+    async def run_batch_scrape():
+        await batch_scrape(API_URL, API_KEY)
+    asyncio.run(run_batch_scrape())
 
 with tab2:
     # 网站映射功能
@@ -114,16 +117,48 @@ with tab3:
                             "mobile": mobile
                         }
                     }
-                    print(f"正在调用API: URL={url}, API_URL={API_URL}")
-                    print(f"提交的options参数: {options}")
-                    result = start_crawl(url, API_URL, API_KEY, options)
-                    print(f"API调用结果: {result}")
-                    if result:
-                        if isinstance(result, list):
-                            st.session_state.crawl_results = result
-                            st.success(f"爬取完成! 共获取 {len(result)} 个页面")
-                        else:
-                            st.error(f"无效的API响应格式: {type(result)}")
+                    async def run_crawl():
+                        async with AsyncFirecrawlClient(API_URL, API_KEY) as client:
+                            # 启动爬取任务
+                            result = await client.start_crawl(url, options)
+                            if result and result.get('jobId'):
+                                st.session_state.crawl_job_id = result['jobId']
+                                st.session_state.crawl_results = []
+                                st.success(f"爬取任务已提交! 任务ID: {result['jobId']}")
+                                
+                                # 检查状态直到完成
+                                st.session_state.crawl_status = "running"
+                                progress_bar = st.progress(0)
+                                status_text = st.empty()
+                                
+                                while st.session_state.crawl_status == "running":
+                                    status = await client.check_crawl_status(st.session_state.crawl_job_id)
+                                    if status:
+                                        if status.get('status') == 'completed':
+                                            st.session_state.crawl_status = "completed"
+                                            st.session_state.crawl_results = status.get('data', [])
+                                            progress_bar.progress(100)
+                                            status_text.success("爬取完成!")
+                                            break
+                                        elif status.get('status') == 'failed':
+                                            st.session_state.crawl_status = "failed"
+                                            progress_bar.progress(100)
+                                            status_text.error(f"爬取失败: {status.get('message', '未知错误')}")
+                                            break
+                                        else:
+                                            progress = status.get('progress', 0)
+                                            progress_bar.progress(progress)
+                                            status_text.info(f"正在爬取... 进度: {progress}%")
+                                            await asyncio.sleep(2)
+                                    else:
+                                        st.session_state.crawl_status = "error"
+                                        progress_bar.progress(100)
+                                        status_text.error("获取状态失败")
+                                        break
+                                
+                                st.rerun()
+                    
+                    asyncio.run(run_crawl())
 
     # 显示爬取结果
     if st.session_state.get('crawl_results'):
@@ -134,34 +169,17 @@ with tab3:
         parsed_results = parse_crawl_results(st.session_state.crawl_results)
         st.info(f"共爬取 {len(parsed_results)} 个页面")
         
-        # 下载按钮行
-        col1, col2 = st.columns(2)
-        with col1:
-            st.download_button(
-                label="下载完整结果(JSON)",
-                data=str(st.session_state.crawl_results),
-                file_name="crawl_results.json",
-                mime="application/json"
-            )
-        with col2:
-            st.download_button(
-                label="下载合并Markdown",
-                data="\n\n---\n\n".join([r['markdown'] for r in parsed_results if r.get('markdown')]),
-                file_name="combined_markdown.md",
-                mime="text/markdown"
-            )
-        
-        # 复制按钮
-        if st.button("复制Markdown到剪贴板"):
-            from crawl import copy_markdown
-            if copy_markdown(parsed_results):
-                st.success("Markdown已复制到剪贴板!")
-            else:
-                st.error("复制失败")
-        
         # 显示结果表格
         st.dataframe({
             "URL": [r['url'] for r in parsed_results],
             "标题": [r['title'] for r in parsed_results],
             "字数": [r['word_count'] for r in parsed_results]
         })
+        
+        # 下载按钮
+        st.download_button(
+            label="下载完整结果(JSON)",
+            data=str(st.session_state.crawl_results),
+            file_name="crawl_results.json",
+            mime="application/json"
+        )
